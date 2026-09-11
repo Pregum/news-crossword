@@ -1,0 +1,33 @@
+# ローカル開発用の環境変数（wrangler dev が読み込む）
+# 本番は `npx wrangler secret put <名前>` で設定する
+
+# 手動で収集を起こす POST /api/news/refresh のキー（任意の長い文字列）。
+# 未設定なら手動収集は使えない（cron による毎時の収集は動く）。
+ADMIN_KEY=change-me-to-a-long-random-string
+
+# 読みに行くRSS/Atomのフィード（カンマ区切り・https のみ）。
+# 未設定ならGoogleニュースのトップ＋主要トピック9本を使う。
+# NEWS_FEEDS=https://www.example.com/rss.xml,https://news.example.jp/atom.xml
+
+# --- AIプロバイダ（出題文と解説を書かせる。無ければ見出しの伏せ字がヒントになる） ---
+# workers-ai (既定) | openai | none
+# AI_PROVIDER=openai
+
+# OpenAI互換エンドポイント（Ollama / LM Studio / vLLM / LiteLLM / OpenAI本家）
+# 例: Ollama をローカルで動かす場合（wrangler dev なら localhost に届く）
+# AI_BASE_URL=http://localhost:11434/v1
+# AI_API_KEY=ollama
+# AI_MODEL_CHAT=llama3.2
+
+# 1日あたりのAI予算（Workers AIの無料枠10,000ニューロンの手前で止める）
+# AI_DAILY_CAP=8000
+
+# --- 計測（すべて任意。未設定なら計測は行われない） ---
+# Cloudflare Web Analytics のトークン（ダッシュボードで発行される32桁の16進文字列）
+# WEB_ANALYTICS_TOKEN=0123456789abcdef0123456789abcdef
+# Google Analytics 4 の測定ID。設定したときだけgtagが読み込まれる
+# GA_MEASUREMENT_ID=G-XXXXXXXXXX
+# Plausible（またはUmami等の互換スクリプト）に登録したドメイン
+# PLAUSIBLE_DOMAIN=example.com
+# セルフホスト版を使う場合のスクリプトURL（https:// で終端が .js のみ許可）
+# PLAUSIBLE_SRC=https://analytics.example.com/js/script.js

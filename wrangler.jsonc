@@ -1,0 +1,47 @@
+{
+  "name": "news-crossword",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    // OGPの絶対URLを配信時に埋めるため、HTMLのページだけWorkerを先に通す
+    "run_worker_first": ["/", "/index.html"]
+  },
+  // 出題文と解説を書かせる。外せば見出しの伏せ字がヒントになる
+  "ai": {
+    "binding": "AI"
+  },
+  // 見出し・出題・タイムの置き場。これが唯一の必須バインディング
+  // （fork したら database_id を自分のものに差し替える: npx wrangler d1 create news-crossword）
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "news-crossword",
+      "database_id": "REPLACE_WITH_YOUR_D1_ID"
+    }
+  ],
+  // IPごとのレート制限と、日次のAI予算カウンタ。外しても動く（制限が無くなるだけ）
+  "durable_objects": {
+    "bindings": [
+      { "name": "LIMITER", "class_name": "RateLimiter" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RateLimiter"] }
+  ],
+  // 需要の把握用。未設定でも動く（バインディングが無ければ計測は自動的に無効）
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "news_crossword_events"
+    }
+  ],
+  // 見出しの収集。1時間ごとにRSSを取りに行く（無料枠で足りる頻度）
+  "triggers": {
+    "crons": ["7 * * * *"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}
