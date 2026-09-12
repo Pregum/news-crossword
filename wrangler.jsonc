@@ -18,7 +18,7 @@
     {
       "binding": "DB",
       "database_name": "news-crossword",
-      "database_id": "REPLACE_WITH_YOUR_D1_ID"
+      "database_id": "21fec90f-1d09-4a77-a4c1-508e57cb9333"
     }
   ],
   // IPごとのレート制限と、日次のAI予算カウンタ。外しても動く（制限が無くなるだけ）
