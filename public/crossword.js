@@ -26,6 +26,8 @@ const el = {
   veilTitle: $("cw-veil-title"),
   veilNote: $("cw-veil-note"),
   start: $("cw-start"),
+  hint: $("cw-hint"),
+  hintLeft: $("cw-hint-left"),
   ranges: $("cw-ranges"),
   result: $("cw-result"),
   resultTime: $("cw-result-time"),
@@ -49,6 +51,7 @@ const state = {
   lastClick: "",      // 同じマスを2回押したら向きを変えるため
   startedAt: 0,
   penaltyMs: 0,
+  hints: 0,           // この盤で使ったヒントの回数
   finalMs: 0,
   mine: null,
   running: false,
@@ -58,6 +61,10 @@ const state = {
 };
 
 const entryId = (e) => `${e.num}${e.dir}`;
+
+// ヒントは1盤に5回まで。1回ごとに +5秒
+const HINT_LIMIT = 5;
+const HINT_PENALTY_MS = 5000;
 
 // ---------------------------------------------------------------- デモ用の見出し
 // バックエンドが無くてもページが遊べるように、サンプルの見出しを積んでおく。
@@ -143,6 +150,7 @@ function setPuzzle(puzzle, reason = "") {
   state.pending = "";
   state.tentative = null;
   state.penaltyMs = 0;
+  state.hints = 0;
   state.finalMs = 0;
   state.mine = null;
   state.submitted = false;
@@ -156,6 +164,7 @@ function setPuzzle(puzzle, reason = "") {
   renderRack();
   renderClues();
   renderProgress();
+  renderHint();
   el.timer.classList.remove("is-penalty");
   showTime(0);
 
@@ -901,7 +910,16 @@ $("cw-reset").addEventListener("click", () => {
   renderRack();
 });
 
-$("cw-hint").addEventListener("click", () => {
+// 残り回数をボタンに出す。使い切ったら押せなくする
+function renderHint() {
+  const left = Math.max(0, HINT_LIMIT - state.hints);
+  el.hintLeft.textContent = `${left}/${HINT_LIMIT}`;
+  el.hint.disabled = left === 0;
+  el.hint.title = left === 0 ? t("ヒントは使い切りました") : t("1マスだけ開ける（+5秒・1盤に5回まで）");
+}
+
+el.hint.addEventListener("click", () => {
+  if (state.hints >= HINT_LIMIT) return;
   const open = state.puzzle.cells.filter(
     (c) => c.ch && !state.filled.has(key(c.x, c.y)) && !isSolvedCell(c.x, c.y)
   );
@@ -910,7 +928,9 @@ $("cw-hint").addEventListener("click", () => {
   const idx = state.rack.findIndex((tk) => tk.ch === cell.ch && !tk.used);
   if (idx >= 0) state.rack[idx].used = true;
   state.filled.set(key(cell.x, cell.y), { ch: cell.ch, rackIdx: idx, given: false, hinted: true });
-  state.penaltyMs += 5000;
+  state.penaltyMs += HINT_PENALTY_MS;
+  state.hints++;
+  renderHint();
   track("cw_hint", state.demo ? "demo" : state.range);
   el.timer.classList.add("is-penalty");
   setTimeout(() => el.timer.classList.remove("is-penalty"), 600);

@@ -101,6 +101,13 @@ const CW_HARNESS = `
       out.push("erased=" + !state.filled.has(key(spot.x, spot.y)));
     }
 
+    // ヒントは5回まで。6回目は効かず、ボタンも押せなくなる
+    for (let i = 0; i < 6; i++) el.hint.click();
+    out.push("hints=" + state.hints);
+    out.push("penalty=" + state.penaltyMs);
+    out.push("hintOff=" + el.hint.disabled);
+    out.push("hintLeft=" + el.hintLeft.textContent);
+
     for (const c of state.puzzle.cells) {
       if (!c.ch || state.filled.has(key(c.x, c.y))) continue;
       const i = state.rack.findIndex((t) => t.ch === c.ch && !t.used);
@@ -224,6 +231,9 @@ async function main() {
         check("スペースで縦横が切り替わる", f.flipped === "true", f.flipped);
         check("backspaceで消せる", f.erased === "true", f.erased);
         check("置いた字を戻せる", f.tookBack === "true", f.tookBack);
+        check("ヒントは5回で打ち止め", f.hints === "5" && f.hintOff === "true", `${f.hints}/${f.hintOff}`);
+        check("ヒント5回で+25秒", f.penalty === "25000", f.penalty);
+        check("残り回数が0/5になる", f.hintLeft === "0/5", f.hintLeft);
         check("手持ちの字だけで盤が埋まる", f.filledAll === "true", f.filledAll);
         check("全部の語が正解になる", f.solved === "true", f.solved);
         check("正解した語の詳細が出る", f.detail === "true", f.detail);

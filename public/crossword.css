@@ -62,6 +62,7 @@
 .cw-progress { font-family: var(--font-dot); font-size: 13px; letter-spacing: 1px; }
 .cw-corpus { font-size: 11px; color: var(--ink-dim); }
 .cw-tools { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.cw-hint-left { font-family: var(--font-mono); font-size: 11px; opacity: 0.8; }
 
 .cw-board-wrap {
   position: relative;
