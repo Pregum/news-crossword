@@ -303,6 +303,18 @@
 .cw-ranking .cw-rank-ms { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .cw-ranking li.is-me { background: #1d2216; outline: 1px solid var(--acid); }
 .cw-empty { font-size: 11px; color: var(--ink-dim); }
+.cw-board-pick {
+  width: 100%;
+  margin-bottom: 10px;
+  background: #0c0e09;
+  border: 1px solid var(--line-hi);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 8px;
+}
+.cw-board-pick:focus { border-color: var(--acid); outline: none; }
+.cw-board-pick[hidden] { display: none; }
 
 /* ---- クリア画面 ---- */
 .cw-result {

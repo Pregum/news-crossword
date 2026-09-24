@@ -19,6 +19,7 @@ const el = {
   detail: $("cw-detail"),
   detailBody: $("cw-detail-body"),
   ranking: $("cw-ranking"),
+  boardPick: $("cw-board-pick"),
   timer: $("cw-timer"),
   progress: $("cw-progress"),
   corpus: $("cw-corpus"),
@@ -179,6 +180,7 @@ function setPuzzle(puzzle, reason = "") {
   el.veil.hidden = false;
   localizeDom(document.body);
   track("cw_open", state.demo ? "demo" : puzzle.range);
+  loadBoards();
   loadRanking();
 }
 
@@ -656,8 +658,42 @@ function finish() {
   el.resultForm.hidden = state.demo;
 }
 
-async function loadRanking() {
-  const id = state.puzzle?.id;
+// ランキングを遡れる盤の一覧。いまの盤を先頭に、1週間前までの盤を新しい順に並べる
+async function loadBoards() {
+  const current = state.puzzle?.id;
+  el.boardPick.hidden = true;
+  el.boardPick.innerHTML = "";
+  if (!current) return;
+  const range = current.split("-")[0];
+  let boards = [];
+  try {
+    const res = await fetch(`/api/news/boards?range=${encodeURIComponent(range)}`);
+    if (res.ok) boards = (await res.json()).boards ?? [];
+  } catch {
+    // 取れなければ、いまの盤だけ見せる
+  }
+  // 待っている間に別の期間・別の盤へ移っていたら捨てる
+  if (state.puzzle?.id !== current) return;
+  const past = boards.filter((b) => b.id !== current);
+  if (!past.length) return;
+  const opt = (value, label) => {
+    const o = document.createElement("option");
+    o.value = value;
+    o.textContent = label;
+    return o;
+  };
+  el.boardPick.append(opt(current, t("いまの盤")));
+  for (const b of past) {
+    el.boardPick.append(opt(b.id, `${fmtDate(b.startAt)}〜 · ${b.players}${t("人")}`));
+  }
+  el.boardPick.value = current;
+  el.boardPick.hidden = false;
+}
+
+el.boardPick.addEventListener("change", () => loadRanking(el.boardPick.value));
+
+async function loadRanking(id = state.puzzle?.id) {
+  const isCurrent = id === state.puzzle?.id;
   el.ranking.innerHTML = "";
   if (!id) {
     const li = document.createElement("li");
@@ -673,16 +709,21 @@ async function loadRanking() {
   } catch {
     // 取れなければ空のまま
   }
+  // 待っている間に別の盤が選ばれていたら、そちらの結果に任せる
+  if (el.boardPick.hidden ? !isCurrent : el.boardPick.value !== id) return;
+  el.ranking.innerHTML = "";
   if (!scores.length) {
     const li = document.createElement("li");
     li.className = "cw-empty";
-    li.textContent = t("まだ誰も解いていません。1位を狙えます。");
+    li.textContent = isCurrent
+      ? t("まだ誰も解いていません。1位を狙えます。")
+      : t("この盤は誰も解いていません。");
     el.ranking.appendChild(li);
     return;
   }
   scores.forEach((s, i) => {
     const li = document.createElement("li");
-    if (state.mine && s.name === state.mine.name && s.ms === state.mine.ms) li.classList.add("is-me");
+    if (isCurrent && state.mine && s.name === state.mine.name && s.ms === state.mine.ms) li.classList.add("is-me");
     const no = document.createElement("span");
     no.className = "cw-rank-no";
     no.textContent = `${i + 1}.`;
@@ -980,6 +1021,7 @@ el.resultForm.addEventListener("submit", async (ev) => {
   state.mine = { name: out.name, ms: Math.round(state.finalMs) };
   el.resultNote.textContent = `${out.total}${t("人中")}${out.rank}${t("位")}`;
   el.resultForm.hidden = true;
+  if (!el.boardPick.hidden) el.boardPick.value = state.puzzle.id;
   loadRanking();
 });
 

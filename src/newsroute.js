@@ -232,6 +232,37 @@ export async function scoresRoute(req, env) {
   return json({ scores: results ?? [] });
 }
 
+// ランキングを遡れる期間。出題の控え（crossword_puzzles）を残す日数と揃える
+const HISTORY_MS = 7 * 86_400_000;
+
+/**
+ * 期間ごとの、ランキングを遡れる盤の一覧（新しい順）。
+ * 誰かがタイムを登録した盤だけを返す。盤の開始時刻は id の通し番号から逆算できる。
+ */
+export async function boardsRoute(req, env, { now = Date.now() } = {}) {
+  const url = new URL(req.url);
+  const range = url.searchParams.get("range") || "1d";
+  if (!PUZZLE_TTL[range]) return json({ error: "unknown range" }, 400);
+  const ttl = PUZZLE_TTL[range];
+  const since = now - HISTORY_MS;
+  const { results } = await env.DB.prepare(
+    `SELECT puzzle_id AS id, COUNT(*) AS players, MIN(ms) AS best
+       FROM crossword_scores
+      WHERE puzzle_id >= ? AND puzzle_id < ? AND created_at >= ?
+      GROUP BY puzzle_id`
+  )
+    .bind(`${range}-`, `${range}.`, since)
+    .all();
+  const boards = (results ?? [])
+    .map((r) => {
+      const bucket = Number(String(r.id).split("-")[1]);
+      return { ...r, startAt: bucket * ttl, endAt: (bucket + 1) * ttl };
+    })
+    .filter((b) => Number.isFinite(b.startAt) && b.endAt > since)
+    .sort((a, b) => b.startAt - a.startAt);
+  return json({ range, boards });
+}
+
 /**
  * タイムを記録する。盤の答えのハッシュが合ったものだけ受け付ける
  * （順位はタイムを競うお遊びなので、これ以上の防御はしない）。

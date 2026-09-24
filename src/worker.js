@@ -9,6 +9,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { getAiProvider } from "./ai.js";
 import {
+  boardsRoute,
   newsEnabled,
   puzzleRoute,
   refreshAll,
@@ -237,6 +238,9 @@ export default {
       }
       if (pathname === "/api/news/scores" && req.method === "GET") {
         return scoresRoute(req, env);
+      }
+      if (pathname === "/api/news/boards" && req.method === "GET") {
+        return boardsRoute(req, env);
       }
       if (pathname === "/api/news/scores" && req.method === "POST") {
         return tracked(
