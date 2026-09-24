@@ -3,6 +3,8 @@
 **直近のニュースからその場で組み上がるクロスワード。** 1分で解ける大きさで、同じ盤を解いた人どうしでタイムを競えます。
 Cloudflare Workers + D1 + Workers AI だけで動き、**依存パッケージはゼロ**（`package.json` もありません）。
 
+**公開中の盤**: <https://news-crossword.pregum-dev.workers.dev/>（独自ドメインは未設定で、`workers.dev` のサブドメインのまま動かしています）
+
 ```
 cron（毎時）→ RSSを取得 → 見出しだけをD1へ
                                   ↓
