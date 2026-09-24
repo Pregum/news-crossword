@@ -9,8 +9,10 @@ import {
   buildGrid,
   buildPuzzle,
   buzzSeries,
+  isCrime,
   maskedClue,
   normalizeWord,
+  outletOf,
   pickEvidence,
   pickWords,
   rankCandidates,
@@ -71,6 +73,46 @@ const hoursAgo = (h) => NOW - h * 3_600_000;
   assert.ok(words.includes("スマートフオン"), "カタカナ語を拾う");
   assert.ok(!words.includes("ニュース"), "見出しの飾り語は除く");
   assert.ok(!words.includes("アプリ"), "汎用語は除く");
+  assert.ok(!wordsInTitle("ニュースでニュース").has("ニユース"), "小書き文字を含む除外語も効く");
+  assert.ok(!wordsInTitle("安保理で警鐘（ロイター）").has("ロイタ"), "末尾の配信元は語として拾わない");
+  assert.equal(outletOf({ title: "低価格AIモデルを発表（時事通信）", source: "Yahoo!ニュース" }), "時事通信",
+    "まとめ配信は末尾の括弧から元の媒体を読む");
+  assert.equal(outletOf({ title: "明日は洗濯日和(気象予報士 山田 2026年09月23日)", source: "tenki.jp" }), "tenki.jp");
+}
+
+// ---------------------------------------------------------------- 犯罪系・重複出典の除外
+{
+  assert.ok(isCrime("小型カメラ盗撮 男を3度目の逮捕"));
+  assert.ok(!isCrime("無人配送トラックが公道を走り始めた"));
+
+  const at = (title, source, h, link) => ({ title, source, link, publishedAt: hoursAgo(h) });
+  const articles = [
+    at("トランプ氏が演説", "A社", 1, "https://a.test/1"),
+    at("トランプ氏と会談", "B社", 2, "https://b.test/2"),
+    at("イラン情勢が緊迫", "A社", 1, "https://a.test/3"),
+    at("イランが提案", "C社", 2, "https://c.test/4"),
+    at("ドイツで選挙", "B社", 3, "https://b.test/5"),
+    at("ドイツの首相が訪日", "C社", 3, "https://c.test/6"),
+    at("メキシコで地震", "A社", 4, "https://a.test/7"),
+    at("メキシコ大統領が発言", "B社", 4, "https://b.test/8"),
+    // 同じ媒体が改稿して2回出した記事。語の数は稼ぐが、媒体の割れた語より後に回る
+    at("明日は洗濯のチャンス 寒暖差に注意", "D社", 1, "https://d.test/9"),
+    at("明日は洗濯のチャンス 寒暖差大きく服装注意", "D社", 2, "https://d.test/10"),
+    // 犯罪の見出しは盤にも根拠にも出さない
+    at("カメラで盗撮 男を逮捕", "A社", 1, "https://a.test/11"),
+    at("盗撮カメラの男を送検", "B社", 2, "https://b.test/12"),
+  ];
+  const ranked = rankCandidates(articles, { now: NOW, windowMs: 86_400_000 });
+  const chosen = pickWords(ranked, { limit: 4 }).map((c) => c.word);
+  assert.ok(!chosen.includes("チヤンス"), "1媒体だけの語より、媒体の割れた語を先に取る");
+
+  const p = buildPuzzle(articles, { range: "1d", now: NOW, seed: "t" });
+  assert.ok(p, "盤が組める");
+  assert.ok(!p.entries.some((e) => e.word === "カメラ"), "犯罪の見出しから出題しない");
+  assert.equal(p.corpus, 10, "犯罪の見出しは母数からも外す");
+
+  const ev = pickEvidence(articles, "チヤンス");
+  assert.equal(ev.length, 1, "ほぼ同じ見出し（同じ記事の改稿）は根拠に重ねない");
 }
 
 // ---------------------------------------------------------------- 採点と選抜

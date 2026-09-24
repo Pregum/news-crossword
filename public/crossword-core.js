@@ -34,17 +34,46 @@ const STOPWORDS = new Set([
   "ドキュメント", "コラム", "コーナー", "フォト", "ギャラリー", "ムービー",
 ]);
 
+// 比べるのは正規化後の語なので、除外語も同じ形に揃えておく（ニュース → ニユース）
+const STOP_NORMALIZED = new Set([...STOPWORDS].map(normalizeWord));
+
 const isBoring = (w) =>
-  STOPWORDS.has(w) ||
+  STOP_NORMALIZED.has(w) ||
   /^[ー]+$/.test(w) ||
   /^ー/.test(w) ||
   // 「アメリカン」のような語尾だけの断片は避けたいが、ここでは長音の連続だけ弾く
   /ーー/.test(w);
 
+// --- 見出しの下ごしらえ -----------------------------------------------------
+// 見出し末尾の配信元や署名（「（ロイター）」「(気象予報士 〇〇 2026年09月23日)」）。
+// 話題そのものではないので、語を拾う対象から外す（「ロイタ」が出題されてしまう）。
+const TRAILER = /\s*[（(][^（）()]{1,40}[)）]\s*$/;
+export const headlineBody = (title) => String(title).replace(TRAILER, "");
+
+// まとめ配信（Yahoo!ニュース等）は媒体名が1つに潰れるので、末尾の括弧から元の媒体を読む
+const AGGREGATOR = /yahoo|goo|livedoor|excite|msn|smartnews|antenna|dメニュー/i;
+export function outletOf(article) {
+  const source = article.source || "";
+  if (!AGGREGATOR.test(source)) return source;
+  const m = String(article.title).match(/[（(]([^（）()\d]{2,20})[)）]\s*$/);
+  return m ? m[1].trim() : source;
+}
+
+// 犯罪・事件の見出しはクイズの題材にしない。盤からも根拠の一覧からも外す
+const CRIME = new RegExp(
+  [
+    "逮捕", "容疑", "疑いで", "送検", "起訴", "被告", "懲役", "実刑", "執行猶予", "指名手配",
+    "事件", "殺害", "刺殺", "殺人事件", "殺人未遂", "強盗", "窃盗", "万引", "詐欺", "横領",
+    "暴行", "傷害", "盗撮", "わいせつ", "性的", "不同意性交", "痴漢", "児童ポルノ", "ストーカー",
+    "誘拐", "監禁", "放火", "虐待", "ひき逃げ", "飲酒運転", "酒気帯び", "飲酒事故", "死体遺棄", "遺体", "覚醒剤", "大麻", "薬物",
+  ].join("|")
+);
+export const isCrime = (title) => CRIME.test(String(title));
+
 // 見出し1本から、盤に載せられるカタカナ語を拾う（重複は1回に畳む）
 export function wordsInTitle(title, { min = 3, max = 7 } = {}) {
   const found = new Map(); // 正規化後 -> 見出し上の表記
-  for (const raw of String(title).match(KATAKANA_RUN) || []) {
+  for (const raw of headlineBody(title).match(KATAKANA_RUN) || []) {
     const surface = raw.replace(/ー+$/, "");
     const word = normalizeWord(surface);
     if (word.length < min || word.length > max) continue;
@@ -78,7 +107,8 @@ export function rankCandidates(articles, { now = Date.now(), windowMs = 86_400_0
       }
       s.count++;
       s.score += fresh;
-      if (a.source) s.sources.add(a.source);
+      const outlet = outletOf(a);
+      if (outlet) s.sources.add(outlet);
       s.surfaces.set(surface, (s.surfaces.get(surface) || 0) + 1);
       s.articles.push(i);
     }
@@ -99,21 +129,23 @@ export function rankCandidates(articles, { now = Date.now(), windowMs = 86_400_0
   return out.sort((a, b) => b.score - a.score || b.count - a.count);
 }
 
-// 上位から、互いに包含しない語だけを取る（ワールド と ワールドカップ を同時に出さない）
-export function pickWords(ranked, { limit = 7, minCount = 2 } = {}) {
-  const pick = (need) => {
-    const chosen = [];
+// 上位から、互いに包含しない語だけを取る（ワールド と ワールドカップ を同時に出さない）。
+// 1つの媒体だけが繰り返し書いた語より、複数の媒体が取り上げた語を先に取る。
+export function pickWords(ranked, { limit = 7, minCount = 2, enough = 8 } = {}) {
+  const chosen = [];
+  const take = (ok) => {
     for (const c of ranked) {
-      if (c.count < need) continue;
+      if (chosen.length >= limit) break;
+      if (!ok(c) || chosen.includes(c)) continue;
       if (chosen.some((p) => p.word.includes(c.word) || c.word.includes(p.word))) continue;
       chosen.push(c);
-      if (chosen.length >= limit) break;
     }
-    return chosen;
   };
-  let chosen = pick(minCount);
-  // 収集を始めた直後は母数が少ない。足りなければ1本だけの語も混ぜる
-  if (chosen.length < Math.min(4, limit)) chosen = pick(1);
+  take((c) => c.count >= minCount && c.sources >= 2);
+  // 1日ぶんだと媒体の割れた語が足りないことがある。そのときだけ1媒体の語、1本だけの語の順で埋める
+  // （盤に置けるのは候補の一部なので、候補が少ないと盤が極端に小さくなる）
+  if (chosen.length < Math.min(enough, limit)) take((c) => c.count >= minCount);
+  if (chosen.length < Math.min(enough, limit)) take(() => true);
   return chosen;
 }
 
@@ -260,27 +292,43 @@ const shuffled = (arr, rnd) => {
 // --- 根拠と話題量 -----------------------------------------------------------
 const mentions = (article, word) => wordsOf(article).has(word);
 
-// 正解した語の裏取り。同じ媒体ばかりにならないよう、媒体は1本ずつ拾う
+// 見出しどうしの近さ（文字の2字組の重なり）。同じ記事の改稿・配信違いを見分けるのに使う
+const bigrams = (title) => {
+  const t = headlineBody(title).replace(/\s+/g, "");
+  const set = new Set();
+  for (let i = 0; i < t.length - 1; i++) set.add(t.slice(i, i + 2));
+  return set;
+};
+export function similarTitle(a, b, threshold = 0.5) {
+  const x = bigrams(a);
+  const y = bigrams(b);
+  if (!x.size || !y.size) return headlineBody(a) === headlineBody(b);
+  let common = 0;
+  for (const g of x) if (y.has(g)) common++;
+  return common / Math.min(x.size, y.size) >= threshold;
+}
+
+// 正解した語の裏取り。同じ媒体ばかりにならないよう、媒体は1本ずつ拾う。
+// 同じ記事の改稿・別配信（見出しがほぼ同じもの）は、媒体が違っても1本として扱う
 export function pickEvidence(articles, word, { limit = 3 } = {}) {
   const hits = articles
     .filter((a) => a.link && mentions(a, word))
     .sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
   const out = [];
   const seenSource = new Set();
-  const seenTitle = new Set();
   for (const pass of [1, 2]) {
     for (const a of hits) {
       if (out.length >= limit) break;
-      if (seenTitle.has(a.title)) continue;
-      if (pass === 1 && a.source && seenSource.has(a.source)) continue;
+      if (out.some((o) => o.title === a.title || similarTitle(o.title, a.title))) continue;
+      const outlet = outletOf(a);
+      if (pass === 1 && outlet && seenSource.has(outlet)) continue;
       out.push({
         title: a.title,
         source: a.source || "",
         link: a.link,
         publishedAt: a.publishedAt || 0,
       });
-      seenTitle.add(a.title);
-      if (a.source) seenSource.add(a.source);
+      if (outlet) seenSource.add(outlet);
     }
   }
   return out;
@@ -355,7 +403,7 @@ export function buildPuzzle(articles, { range = "1d", now = Date.now(), seed = "
   const inWindow = withWords(
     articles.filter((a) => {
       const age = now - (a.publishedAt || 0);
-      return age >= 0 && age <= conf.windowMs;
+      return age >= 0 && age <= conf.windowMs && !isCrime(a.title);
     })
   );
   const ranked = rankCandidates(inWindow, { now, windowMs: conf.windowMs });
