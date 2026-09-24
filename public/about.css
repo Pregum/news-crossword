@@ -1,0 +1,112 @@
+/* 出題のしくみのページ。土台の配色とヘッダは style.css を使う */
+
+.ab-main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 16px 56px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.85;
+}
+.ab-main a { color: var(--cyan); }
+.ab-main strong { color: var(--acid); font-weight: 500; }
+
+.ab-title {
+  font-family: var(--font-dot);
+  font-weight: 400;
+  font-size: 26px;
+  letter-spacing: 2px;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.ab-lead { color: var(--ink-dim); margin-bottom: 20px; }
+
+/* 流れの見取り図 */
+.ab-flow {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 26px;
+  font-family: var(--font-dot);
+  font-size: 12px;
+}
+.ab-flow li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line-hi);
+  background: #12150f;
+  padding: 4px 10px 4px 4px;
+}
+.ab-flow span {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  background: var(--acid);
+  color: #0b0d0c;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.ab-sec {
+  border: 1px solid var(--line);
+  background: linear-gradient(to bottom, #151910, var(--panel));
+  padding: 16px 18px 18px;
+  margin-bottom: 16px;
+}
+.ab-sec > p, .ab-sec > ul, .ab-sec > ol, .ab-sec > table, .ab-sec > div { margin-bottom: 10px; }
+.ab-sec > :last-child { margin-bottom: 0; }
+.ab-sec ul, .ab-sec ol { padding-left: 1.3em; }
+.ab-sec li + li { margin-top: 4px; }
+
+.ab-note { font-size: 12.5px; color: var(--ink-dim); }
+.ab-eg {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-dim);
+  border-left: 2px solid var(--magenta);
+  padding-left: 8px;
+  margin-top: 2px;
+}
+
+.ab-steps li::marker { color: var(--acid); font-family: var(--font-mono); }
+
+.ab-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ab-table th, .ab-table td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; }
+.ab-table th { font-weight: 500; color: var(--ink-dim); background: #0e100c; }
+
+.ab-formula {
+  border: 1px dashed var(--line-hi);
+  background: #0c0e09;
+  padding: 12px 14px;
+}
+.ab-formula > p { font-family: var(--font-mono); color: var(--acid); margin-bottom: 8px; }
+.ab-formula b { font-weight: 600; }
+.ab-formula dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 13px; }
+.ab-formula dt { color: var(--cyan); }
+
+/* 語の一覧（crossword-core.js から読み込んで並べる） */
+.ab-chips { list-style: none; display: flex; flex-wrap: wrap; gap: 5px; padding-left: 0 !important; }
+.ab-chips li {
+  margin: 0 !important;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 3px 8px;
+  border: 1px solid #4a2038;
+  color: var(--magenta);
+  background: #1a0f16;
+}
+.ab-chips-dim li { border-color: var(--line-hi); color: var(--ink-dim); background: #0e100c; }
+
+.ab-foot { font-size: 12.5px; color: var(--ink-dim); margin-top: 24px; }
+
+@media (max-width: 600px) {
+  .ab-main { padding: 20px 16px 40px; font-size: 13.5px; }
+  .ab-sec { padding: 14px 14px 16px; }
+  .ab-formula dl { grid-template-columns: 1fr; }
+  .ab-formula dd { margin-bottom: 6px; }
+}
+
+.topbar-actions a.btn { text-decoration: none; display: inline-block; }

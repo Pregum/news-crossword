@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>出題のしくみ | 時事クロスワード</title>
+<meta name="description" content="時事クロスワードが、どのニュースを集め、どの見出しを外し、どの語を盤に載せているか。選び方とフィルタの中身をまとめています。" />
+<meta property="og:title" content="出題のしくみ | 時事クロスワード" />
+<meta property="og:description" content="どのニュースを集め、どの見出しを外し、どの語を盤に載せているか。" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="時事クロスワード" />
+<meta property="og:url" content="/about.html" />
+<meta property="og:image" content="/icon-512.png" />
+<meta name="twitter:card" content="summary" />
+<meta name="theme-color" content="#0b0d0c" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0d0c'/><rect x='4' y='4' width='11' height='11' fill='%23c8ff00'/><rect x='17' y='4' width='11' height='11' fill='%2335e0ff'/><rect x='4' y='17' width='11' height='11' fill='%23ff3ea5'/><rect x='17' y='17' width='11' height='11' fill='%23e8e6df'/></svg>" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;900&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./style.css" />
+<link rel="stylesheet" href="./about.css" />
+</head>
+<body class="ab-body">
+<div class="crt-overlay" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="logo" href="./" data-text="NEWS CROSSWORD">NEWS CROSSWORD</a>
+  <span class="logo-sub">時事クロスワード</span>
+  <nav class="topbar-links">
+    <a href="./about.html" aria-current="page">しくみ</a>
+    <a href="https://github.com/Pregum/news-crossword" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+  <div class="topbar-actions">
+    <a class="btn btn-primary" href="./">▶ 盤で遊ぶ</a>
+  </div>
+</header>
+
+<main class="ab-main">
+  <h1 class="ab-title">出題のしくみ</h1>
+  <p class="ab-lead">
+    盤は人が選んでいるのではなく、集めたニュースの見出しから毎回機械的に組み立てています。
+    どの見出しを使い、どれを外し、どの語を盤に載せているかをここにまとめました。
+    下の語の一覧は、実際の判定に使っているものをそのまま読み込んで表示しています。
+  </p>
+
+  <ol class="ab-flow" aria-label="出題までの流れ">
+    <li><span>1</span>集める</li>
+    <li><span>2</span>見出しを外す</li>
+    <li><span>3</span>語を拾う</li>
+    <li><span>4</span>採点する</li>
+    <li><span>5</span>語を選ぶ</li>
+    <li><span>6</span>根拠を添える</li>
+  </ol>
+
+  <section class="ab-sec" id="collect">
+    <h2 class="section-title">1. COLLECT <span class="jp">／ ニュースを集める</span></h2>
+    <ul>
+      <li>1時間に1回、Googleニュースの RSS（トップと、国際・国内・ビジネス・テクノロジー・エンタメ・スポーツ・科学・健康の各トピック）を読みます。</li>
+      <li>持つのは<strong>見出し・媒体名・掲載時刻・記事へのリンクだけ</strong>です。本文は取りません。</li>
+      <li>同じ見出しが複数のトピックに出てきたときは1本にまとめます。見出しは35日で消します。</li>
+    </ul>
+    <table class="ab-table">
+      <thead><tr><th>期間タブ</th><th>使う見出し</th><th>盤の入れ替え</th></tr></thead>
+      <tbody>
+        <tr><td>24時間</td><td>直近24時間に出たもの</td><td>3時間ごと</td></tr>
+        <tr><td>1週間</td><td>直近7日に出たもの</td><td>12時間ごと</td></tr>
+        <tr><td>1か月</td><td>直近30日に出たもの</td><td>24時間ごと</td></tr>
+      </tbody>
+    </table>
+    <p class="ab-note">同じ期間・同じ時間帯なら、誰が開いても同じ盤になります。遊んでいる途中に盤が変わらないよう、盤は入れ替えの時刻が来るまで作り直しません。</p>
+  </section>
+
+  <section class="ab-sec" id="exclude">
+    <h2 class="section-title">2. EXCLUDE <span class="jp">／ 犯罪系の見出しを外す</span></h2>
+    <p>
+      次のどれかを<strong>見出しのどこかに含む記事</strong>は、出題にも、正解後に出る根拠の記事にも、話題量のグラフにも使いません。
+      画面に出る「◯本の見出しから」の本数からも除いています。
+    </p>
+    <ul class="ab-chips" id="ab-crime" aria-label="外す見出しに含まれる語"></ul>
+    <p class="ab-note">
+      判定は語が含まれているかどうかだけで、記事の中身までは見ていません。
+      そのため「事件」「遺体」を含む記事は、犯罪と関係がなくても外れます。
+      逆に、犯罪ではない事故（交通事故・水難など）の記事は外していません。
+    </p>
+  </section>
+
+  <section class="ab-sec" id="words">
+    <h2 class="section-title">3. WORDS <span class="jp">／ 盤に載せる語を拾う</span></h2>
+    <ul>
+      <li>
+        盤に載せるのは<strong>見出しに出てくる3〜7文字のカタカナ語だけ</strong>です。
+        漢字は読みを決めるのに辞書が要るので使っていません。時事の見出しは人名・国名・企業名・製品名などのカタカナ語が多いので、これで盤が組めます。
+      </li>
+      <li>小さい字は大きい字として1マスに置きます（シャ → シヤ、ッ → ツ）。語の終わりの「ー」は落とします（ゼレンスキー → ゼレンスキ）。</li>
+      <li>
+        見出しの<strong>最後の括弧の中</strong>は拾いません。そこには配信元や署名が入るからです。
+        <span class="ab-eg">例: 「〜人類への脅威」（ロイター） から「ロイタ」が出題されていた</span>
+      </li>
+      <li>見出しの飾りに使われるだけの語は拾いません。</li>
+    </ul>
+    <ul class="ab-chips ab-chips-dim" id="ab-stop" aria-label="拾わない語"></ul>
+  </section>
+
+  <section class="ab-sec" id="score">
+    <h2 class="section-title">4. SCORE <span class="jp">／ 話題になった度合いを採点する</span></h2>
+    <p>拾った語ごとに、次の式で点を付けます。</p>
+    <div class="ab-formula">
+      <p><b>点数</b> = Σ<sub>見出し</sub> 新しさ ＋ 媒体の多さ − 長さの割引</p>
+      <dl>
+        <dt>新しさ</dt><dd>その語を含む見出し1本ごとに加点。期間の終わりに出た見出しほど 2.0、始まりに出た見出しほど 1.0 に近い</dd>
+        <dt>媒体の多さ</dt><dd>取り上げた媒体の数 −1 に 0.8 を掛けたもの。3媒体ぶん（2.4点）で頭打ち</dd>
+        <dt>長さの割引</dt><dd>6文字以上の語は、5文字を超える1文字ごとに 0.3 引く（長い語は盤に置きにくいため）</dd>
+      </dl>
+    </div>
+    <p class="ab-note">
+      媒体は、ふつうは RSS に書かれた媒体名で数えます。Yahoo!ニュースのようなまとめ配信は媒体名が1つになってしまうので、見出しの最後の括弧に書かれた元の媒体（時事通信など）で数えます。
+    </p>
+  </section>
+
+  <section class="ab-sec" id="pick">
+    <h2 class="section-title">5. PICK <span class="jp">／ 盤に載せる語を選ぶ</span></h2>
+    <p>点の高い順に、次の優先順で最大10語の候補を選びます。</p>
+    <ol class="ab-steps">
+      <li><strong>2本以上の見出しに出ていて、2つ以上の媒体が取り上げた語</strong></li>
+      <li>候補が8語に届かなければ、2本以上の見出しに出ているが1つの媒体だけの語</li>
+      <li>まだ足りなければ、1本の見出しにだけ出た語</li>
+    </ol>
+    <ul>
+      <li>
+        2の段を1の段より後ろにしたのは、1つの媒体が同じ記事を書き直して出しただけで語の本数が増えるのを避けるためです。
+        <span class="ab-eg">例: tenki.jp のほぼ同じ天気予報2本だけで「チャンス」が出題されていた</span>
+      </li>
+      <li>片方がもう片方を含む語は、同時には選びません（「ワールド」と「ワールドカップ」など）。</li>
+      <li>候補のうち、互いに交差させて盤に置けたもの（最大7語）が出題になります。候補が3語に満たないときは盤を作りません。</li>
+    </ul>
+  </section>
+
+  <section class="ab-sec" id="evidence">
+    <h2 class="section-title">6. EVIDENCE <span class="jp">／ 正解した語の根拠を添える</span></h2>
+    <ul>
+      <li>正解すると、その語を含む見出しを<strong>新しい順に最大3本</strong>、記事へのリンク付きで出します。</li>
+      <li>まず媒体が重ならないように1媒体1本ずつ選び、足りないときだけ同じ媒体からも選びます。</li>
+      <li>
+        <strong>ほぼ同じ見出しは1本として扱います</strong>。見出しを2文字ずつ区切ったときに、短いほうの見出しの半分以上が相手と一致したら、同じ記事の書き直しか別配信とみなして並べません。
+      </li>
+      <li>話題量のグラフは、その語を含む見出しの本数を、24時間なら1時間ごと、1週間・1か月なら1日ごとに数えたものです。</li>
+    </ul>
+  </section>
+
+  <section class="ab-sec" id="hint">
+    <h2 class="section-title">HINTS <span class="jp">／ 出題文</span></h2>
+    <ul>
+      <li>AI が使える間は、語と見出しを AI に渡して、答えを伏せた出題文と、見出しから読み取れる事実だけの解説を作らせます。</li>
+      <li>出題文に答えが入っていたら、AI の文は使いません。</li>
+      <li>AI が使えないときは、その語を含むいちばん短い見出しを、答えの部分を〇で伏せて出題文にします。</li>
+    </ul>
+  </section>
+
+  <section class="ab-sec" id="ranking">
+    <h2 class="section-title">RANKING <span class="jp">／ タイム</span></h2>
+    <ul>
+      <li>ランキングは盤ごとです。同じ期間タブの盤なら、1週間前のものまでさかのぼって見られます。</li>
+      <li>登録するのは名前とタイムだけで、個人は追いません。答えが合っていないタイムは受け付けません。</li>
+    </ul>
+  </section>
+
+  <p class="ab-foot">
+    判定の中身はすべて <a href="https://github.com/Pregum/news-crossword/blob/main/public/crossword-core.js" target="_blank" rel="noopener">public/crossword-core.js</a> にあります。
+    外すべき見出しや、拾うべきでない語に気づいたら <a href="https://github.com/Pregum/news-crossword/issues" target="_blank" rel="noopener">Issue</a> で教えてください。
+  </p>
+</main>
+
+<script type="module" src="./about.js"></script>
+</body>
+</html>

@@ -7,6 +7,7 @@ const EN = {
   "時事クロスワード": "News Crossword",
   "ニュースから自動生成されるクロスワード": "A crossword generated from the news",
   "出題の期間": "Puzzle window",
+  "しくみ": "How it works",
   "24時間": "24 hours",
   "1週間": "1 week",
   "1か月": "1 month",
